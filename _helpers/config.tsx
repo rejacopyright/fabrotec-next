@@ -1,0 +1,6 @@
+export const APP_NAME: string = 'NextJS'
+export const APP_MODE: 'live' | 'test' = 'live'
+export const APP_EMAIL: string = 'info@domain.com'
+export const APP_WEBSITE: string = 'www.domain.com'
+export const APP_HOME_PATH: string = '/'
+export const APP_DEFAULT_ROLE: string = 'user'
