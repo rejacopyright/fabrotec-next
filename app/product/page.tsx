@@ -1,6 +1,7 @@
 'use client'
 
 import { getProduct, getProductByCategory, getProductByKeyword } from '@api/product'
+import { DatatableCircleLoader } from '@components/loader'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { parse } from 'qs'
@@ -36,32 +37,39 @@ const Index: FC<any> = () => {
   })
 
   const products = productQuery?.data?.products || []
+  const productIsLoading = !productQuery?.isFetched
 
   return (
     <div className='content'>
       <title>Products</title>
       <Filter />
       <div className='row'>
-        {products?.map((item, key: number) => (
-          <div key={key} className='col-lg-3 col-md-4 col-sm-6 my-10px'>
-            <div
-              className='bg-white border radius-10 overflow-hidden card-2 h-100'
-              onClick={() => navigate.push(`/product/${item?.id || '#'}`)}>
-              <div
-                className='w-200px h-auto mx-auto position-relative'
-                style={{
-                  minHeight: '200px',
-                  background: `#fff url(${item?.images?.[0] ? item?.images?.[0]?.replace(/'/g, '%27') : '/media/placeholder/blank-image.svg'}) center / cover no-repeat`,
-                }}
-              />
-              <div className='p-10px'>
-                <div className='fw-bold fs-16px'>{item?.title || '???'}</div>
-                <div className='text-truncate-2'>{item?.description || '???'}</div>
-              </div>
-              <div className='p-10px fs-16px fw-bolder text-primary'>${item?.price || '0'}</div>
-            </div>
+        {productIsLoading ? (
+          <div className='col-12 d-flex flex-center h-400px'>
+            <DatatableCircleLoader size={30} />
           </div>
-        ))}
+        ) : (
+          products?.map((item, key: number) => (
+            <div key={key} className='col-lg-3 col-md-4 col-sm-6 my-10px'>
+              <div
+                className='bg-white border radius-10 overflow-hidden card-2 h-100'
+                onClick={() => navigate.push(`/product/${item?.id || '#'}`)}>
+                <div
+                  className='w-200px h-auto mx-auto position-relative'
+                  style={{
+                    minHeight: '200px',
+                    background: `#fff url(${item?.images?.[0] ? item?.images?.[0]?.replace(/'/g, '%27') : '/media/placeholder/blank-image.svg'}) center / cover no-repeat`,
+                  }}
+                />
+                <div className='p-10px'>
+                  <div className='fw-bold fs-16px'>{item?.title || '???'}</div>
+                  <div className='text-truncate-2'>{item?.description || '???'}</div>
+                </div>
+                <div className='p-10px fs-16px fw-bolder text-primary'>${item?.price || '0'}</div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

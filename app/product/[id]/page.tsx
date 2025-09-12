@@ -1,5 +1,6 @@
 'use client'
 import { getProductDetail } from '@api/product'
+import { DatatableCircleLoader } from '@components/loader'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { FC, use } from 'react'
@@ -18,6 +19,7 @@ const Index: FC<{ params: any }> = ({ params }) => {
 
   const productDetail = productDetailQuery?.data || {}
   const images = productDetail?.images?.map((img: any) => img.replace(/'/g, '%27')) || []
+  const productIsLoading = !productDetailQuery?.isFetched
 
   const carousel_settings = {
     dots: true,
@@ -40,35 +42,41 @@ const Index: FC<{ params: any }> = ({ params }) => {
               Back
             </button>
           </div>
-          <div className='px-20px py-10px'>
-            <div className='row'>
-              <div className='col-lg-4'>
-                <div className='row'>
-                  <Slider {...carousel_settings}>
-                    {images?.map((img: any, key: number) => (
-                      <div key={key} className='col-auto my-10px'>
-                        <div
-                          className='h-300px btn border border-gray-200 d-flex flex-center position-relative radius-0'
-                          style={{
-                            background: `#fff url(${img}) center / contain no-repeat`,
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </Slider>
+          {productIsLoading ? (
+            <div className='d-flex flex-center h-300px'>
+              <DatatableCircleLoader size={30} />
+            </div>
+          ) : (
+            <div className='px-20px py-10px'>
+              <div className='row'>
+                <div className='col-lg-4'>
+                  <div className='row'>
+                    <Slider {...carousel_settings}>
+                      {images?.map((img: any, key: number) => (
+                        <div key={key} className='col-auto my-10px'>
+                          <div
+                            className='h-300px btn border border-gray-200 d-flex flex-center position-relative radius-0'
+                            style={{
+                              background: `#fff url(${img}) center / contain no-repeat`,
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </Slider>
+                  </div>
                 </div>
-              </div>
-              <div className='col'>
-                <div className='p-10px'>
-                  <div className='fw-bold fs-16px'>{productDetail?.title || '???'}</div>
-                  <div className=''>{productDetail?.description || '???'}</div>
-                </div>
-                <div className='p-10px fs-16px fw-bolder text-primary'>
-                  ${productDetail?.price || '0'}
+                <div className='col'>
+                  <div className='p-10px'>
+                    <div className='fw-bold fs-16px'>{productDetail?.title || '???'}</div>
+                    <div className=''>{productDetail?.description || '???'}</div>
+                  </div>
+                  <div className='p-10px fs-16px fw-bolder text-primary'>
+                    ${productDetail?.price || '0'}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
