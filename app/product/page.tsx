@@ -3,18 +3,23 @@
 import { getProduct, getProductByCategory, getProductByKeyword } from '@api/product'
 import { DatatableCircleLoader } from '@components/loader'
 import { useQuery } from '@tanstack/react-query'
+import omit from 'lodash/omit'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { parse } from 'qs'
-import { FC } from 'react'
+import { FC, useCallback, useEffect, useState } from 'react'
 
 import { Filter } from './_parts/Filter'
 
 const Index: FC<any> = () => {
   const navigate = useRouter()
-
   const searchParams = useSearchParams()
   const queryParams = parse(searchParams.toString() || '', { ignoreQueryPrefix: true })
-  const { limit = '16', category = 'all', sortBy = 'price', order, q } = queryParams
+  const perPage = 12
+  const { limit = perPage?.toString(), category = 'all', sortBy = 'price', order, q } = queryParams
+
+  const [page, setPage] = useState(1)
+  const [products, setProducts] = useState<any[]>([])
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   const productQueryParams: any = {
     limit,
@@ -22,25 +27,76 @@ const Index: FC<any> = () => {
     sortBy,
     order,
     q,
+    page,
   }
 
+  const productParams = {
+    ...omit(productQueryParams, ['page', 'sortBy', 'q', 'order', 'category']),
+    skip: (page - 1) * perPage,
+  }
   const productQuery: any = useQuery({
-    // initialData: {data: []},
     queryKey: ['getProduct', productQueryParams],
-    queryFn: () =>
-      q && q !== ''
-        ? getProductByKeyword(q as string)
-        : category && category !== 'all'
-          ? getProductByCategory(category as string)
-          : getProduct(productQueryParams),
+    queryFn: async () => {
+      if ((q && q !== '') || (category && category !== 'all') || order) {
+        setProducts([])
+        setPage(1)
+        setIsLoadingMore(false)
+      }
+      if (q && q !== '') return getProductByKeyword(q as string)
+      if (category && category !== 'all') return getProductByCategory(category as string)
+      if (order) return getProduct(productQueryParams)
+      try {
+        const res = await getProduct(productParams)
+        return res
+      } catch {
+      } finally {
+        setIsLoadingMore(false)
+      }
+      return []
+    },
     select: ({ data }: any) => data || {},
   })
 
-  const products = productQuery?.data?.products || []
+  // const products = productQuery?.data?.products || []
   const productIsLoading = !productQuery?.isFetched
+  const productHasMore = products?.length > 0
+
+  useEffect(() => {
+    if (page > 1) {
+      if (productQuery?.data?.products) {
+        setProducts((prevProducts) => [...prevProducts, ...(productQuery?.data?.products || [])])
+      }
+      setIsLoadingMore(false)
+    }
+  }, [page, productQuery?.data?.products])
+
+  useEffect(() => {
+    if (productQuery?.data?.products && page === 1) {
+      setProducts(productQuery?.data?.products)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productQuery?.data?.products])
+
+  const handleScroll = useCallback(() => {
+    const scrollPosition = window.innerHeight + window.scrollY
+    const element = document.getElementById('content')
+    const documentHeight = element?.offsetHeight || 0
+
+    if (scrollPosition >= documentHeight + 50 && !isLoadingMore && productHasMore) {
+      setIsLoadingMore(true)
+      setPage((prevPage) => prevPage + 1)
+    }
+  }, [isLoadingMore, productHasMore])
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [handleScroll])
 
   return (
-    <div className='content'>
+    <div className='content' id='content'>
       <title>Products</title>
       <Filter />
       <div className='row'>
@@ -69,6 +125,11 @@ const Index: FC<any> = () => {
               </div>
             </div>
           ))
+        )}
+        {isLoadingMore && (
+          <div className='col-12 d-flex flex-center'>
+            <DatatableCircleLoader size={30} />
+          </div>
         )}
       </div>
     </div>
