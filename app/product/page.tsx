@@ -59,6 +59,7 @@ const Index: FC<any> = () => {
 
   // const products = productQuery?.data?.products || []
   const productIsLoading = !productQuery?.isFetched
+  console.log(productIsLoading)
   const productHasMore = products?.length > 0
 
   useEffect(() => {
@@ -100,7 +101,7 @@ const Index: FC<any> = () => {
       <title>Products</title>
       <Filter />
       <div className='row'>
-        {productIsLoading ? (
+        {productIsLoading && page === 1 ? (
           <div className='col-12 d-flex flex-center h-400px'>
             <DatatableCircleLoader size={30} />
           </div>
